@@ -104,28 +104,37 @@ async function fetchAllRooms() {
         .order("created_at", { ascending: true });
 
       if (!error && data) {
-        const map = new Map();
-        localRooms.forEach((r) => map.set(r.id, r));
-        data.forEach((r) => {
-          const local = map.get(r.id) || {};
+        const everyoneLocal = localRooms.find((room) => room.id === "everyone");
+        const everyoneRoom = data.find((room) => room.id === "everyone");
+        const mergedRooms = data.map((room) => {
+          if (room.id !== "everyone") {
+            return room;
+          }
+
+          const local = everyoneLocal || {};
           const localMembers = Array.isArray(local.members) ? local.members : [];
-          const dbMembers = Array.isArray(r.members) ? r.members : [];
+          const dbMembers = Array.isArray(room.members) ? room.members : [];
           const mergedMembers = Array.from(new Set([...localMembers, ...dbMembers]));
           const localReqs = Array.isArray(local.pending_requests) ? local.pending_requests : [];
-          const dbReqs = Array.isArray(r.pending_requests) ? r.pending_requests : [];
+          const dbReqs = Array.isArray(room.pending_requests) ? room.pending_requests : [];
           const reqMap = new Map();
           localReqs.forEach((item) => reqMap.set(item.user_id, item));
           dbReqs.forEach((item) => reqMap.set(item.user_id, item));
 
-          map.set(r.id, {
+          return {
             ...local,
-            ...r,
+            ...room,
             members: mergedMembers,
             pending_requests: Array.from(reqMap.values()),
             pending_invites: Array.isArray(local.pending_invites) ? local.pending_invites : [],
-          });
+          };
         });
-        return Array.from(map.values());
+
+        if (!everyoneRoom && everyoneLocal) {
+          mergedRooms.unshift(everyoneLocal);
+        }
+
+        return mergedRooms;
       }
     } catch (e) {
       // Supabase table not available or network error
@@ -287,6 +296,7 @@ export async function POST(req) {
       const {
         name,
         description,
+        icon = "globe",
         image_url = "",
         is_private = false,
         creator_id,
@@ -314,9 +324,9 @@ export async function POST(req) {
         icon,
         image_url: image_url?.trim() || "",
         is_private: Boolean(is_private),
-        creator_id: creator_id || null,
+        creator_id: creator_id || verifiedUser.id,
         creator_username: creator_username || "Curator",
-        members: creator_id ? [creator_id] : [],
+        members: [creator_id || verifiedUser.id],
         pending_requests: [],
         invite_code: inviteCode,
         created_at: new Date().toISOString(),

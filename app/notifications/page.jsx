@@ -1,37 +1,31 @@
 "use client";
 
-import { useEffect, useState, useCallback, useMemo } from "react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { supabase, getAuthUser } from "../../lib/supabaseClient";
 import { formatDistanceToNow } from "date-fns";
 import {
-  Bell,
-  Check,
-  CheckCircle2,
-  XCircle,
-  MessageSquare,
-  Heart,
-  Settings,
-  ArrowRight,
-  Camera,
-  BarChart3,
-  Lightbulb,
-  CheckCheck,
-  ExternalLink,
-  Shield,
-  Info,
-  X,
-  RotateCcw,
-  Send,
-  Clock,
-  Users,
-  ChevronDown,
+    ArrowRight,
+    BarChart3,
+    Bell,
+    Camera,
+    Check,
+    ChevronDown,
+    Clock,
+    Heart,
+    MessageSquare,
+    RotateCcw,
+    Send,
+    Settings,
+    Shield,
+    Users,
+    X
 } from "lucide-react";
-import { useToast } from "../../components/Toast";
-import { useAuthDrawer } from "../../components/AuthDrawer";
-import { authFetch } from "../../lib/apiClient";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import AuthBarrier from "../../components/AuthBarrier";
+import { useAuthDrawer } from "../../components/AuthDrawer";
+import { useToast } from "../../components/Toast";
+import { authFetch } from "../../lib/apiClient";
+import { getAuthUser, supabase } from "../../lib/supabaseClient";
 
 export default function NotificationsPage() {
   const router = useRouter();
@@ -129,7 +123,25 @@ export default function NotificationsPage() {
       if (res.ok) {
         const json = await res.json();
         if (json.success) {
-          setNotifications(json.notifications || []);
+          const normalizedNotifications = (json.notifications || []).map((notif) => {
+            if (typeof notif?.message !== "string") return notif;
+
+            try {
+              const parsed = JSON.parse(notif.message);
+              if (parsed?.type === "room_deleted") {
+                return {
+                  ...notif,
+                  type: "system",
+                  title: parsed.roomName ? `Room "${parsed.roomName}" removed` : "Room removed",
+                  subtitle: parsed.text || `The room "${parsed.roomName || "this room"}" was deleted.`,
+                };
+              }
+            } catch (e) {}
+
+            return notif;
+          });
+
+          setNotifications(normalizedNotifications);
           setPublishedPosts(json.publishedPosts || []);
           setPendingPosts(json.pendingPosts || []);
           setFilterCounts(json.filterCounts || {});
