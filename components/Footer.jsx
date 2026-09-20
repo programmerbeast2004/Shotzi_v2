@@ -1,16 +1,17 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { supabase, getAuthUser } from "../lib/supabaseClient";
+import { useCallback, useEffect, useState } from "react";
 import { scrollToSection } from "../lib/scrollToSection";
+import { getAuthUser, supabase } from "../lib/supabaseClient";
 
 export default function Footer() {
   const pathname = usePathname();
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
   const [user, setUser] = useState(null);
+  const shouldHideFooter = pathname === "/auth" || pathname === "/developer";
 
   useEffect(() => {
     setMounted(true);
@@ -28,13 +29,6 @@ export default function Footer() {
       subscription?.unsubscribe();
     };
   }, []);
-
-  // Do not render footer on dedicated auth page or developer page (which has its own minimal editorial footer)
-  if (pathname === "/auth" || pathname === "/developer") {
-    return null;
-  }
-
-  const currentYear = mounted ? new Date().getFullYear() : 2026;
 
   /**
    * Smart click handler for footer hash links.
@@ -63,6 +57,13 @@ export default function Footer() {
     // Different page — do nothing; Next.js router will navigate and
     // page.jsx hash useEffect will handle the scroll on arrival.
   }, []);
+
+  // Do not render footer on dedicated auth page or developer page (which has its own minimal editorial footer)
+  if (shouldHideFooter) {
+    return null;
+  }
+
+  const currentYear = mounted ? new Date().getFullYear() : 2026;
 
   const productLinks = user
     ? [
