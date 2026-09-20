@@ -1,0 +1,12 @@
+node_modules
+.next
+.env
+.env*.local
+.env.local
+.env.production
+.env.development
+!.env.example
+.vercel
+
+# Ignore Markdown files
+*.md
