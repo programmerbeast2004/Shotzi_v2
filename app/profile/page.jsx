@@ -1,16 +1,16 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { ArrowRight, Edit3, Grid, X } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { useAuthDrawer } from "../../components/AuthDrawer";
+import ConfirmDialog from "../../components/ConfirmDialog";
 import PostGrid from "../../components/PostGrid";
 import ProfileHeader from "../../components/ProfileHeader";
-import ConfirmDialog from "../../components/ConfirmDialog";
-import { supabase, getAuthUser } from "../../lib/supabaseClient";
 import { useToast } from "../../components/Toast";
-import { useAuthDrawer } from "../../components/AuthDrawer";
 import { isAdmin } from "../../lib/admin";
-import { Sparkles, Grid, Trash2, ArrowRight, Edit3, X } from "lucide-react";
+import { getAuthUser, supabase } from "../../lib/supabaseClient";
 
 export default function ProfilePage() {
   const [user, setUser] = useState(null);
@@ -242,7 +242,6 @@ export default function ProfilePage() {
           bio: form.bio.trim(),
           header_image_url: form.header_image_url.trim() || null,
           avatar_url: form.avatar_url.trim() || null,
-          updated_at: new Date().toISOString(),
         })
         .eq("id", user.id)
         .select()

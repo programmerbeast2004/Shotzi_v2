@@ -1,12 +1,12 @@
 "use client";
 
-import { createContext, useContext, useState, useEffect, useCallback } from "react";
+import { AlertCircle, ArrowRight, Check, Eye, EyeOff, Lock, Mail, Sparkles, User, X } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { createContext, useCallback, useContext, useEffect, useState } from "react";
 import { supabase } from "../lib/supabaseClient";
-import { X, ArrowRight, Check, AlertCircle, Sparkles, Mail, Lock, User, Eye, EyeOff } from "lucide-react";
-import { useToast } from "./Toast";
-import { THEMES, useTheme } from "./ThemeProvider";
 import ResetPasswordModal from "./ResetPasswordModal";
+import { THEMES, useTheme } from "./ThemeProvider";
+import { useToast } from "./Toast";
 
 const AuthDrawerContext = createContext(null);
 
@@ -160,7 +160,6 @@ function AuthDrawer({ isOpen, mode, onClose, setMode }) {
               id: data.user.id,
               username: cleanUsername,
               display_name: username || cleanUsername,
-              updated_at: new Date().toISOString(),
             },
             { onConflict: "id" }
           );
