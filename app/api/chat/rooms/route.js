@@ -8,8 +8,19 @@ import { getVerifiedUser } from "../../../../lib/serverAuth";
 const dataFilePath = path.join(process.cwd(), "data", "chat-rooms.json");
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 const supabase = supabaseUrl && supabaseKey ? createClient(supabaseUrl, supabaseKey) : null;
+
+function supabaseServiceClient() {
+  if (!supabaseUrl || !supabaseServiceKey) return supabase;
+  return createClient(supabaseUrl, supabaseServiceKey, {
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
+    },
+  });
+}
 
 async function checkIsAdmin(userId) {
   if (!userId || !supabase) return false;
@@ -583,15 +594,35 @@ export async function POST(req) {
       // 2. Remove from Supabase chat_rooms table
       if (supabase) {
         try {
-          const db = bearerToken
-            ? createClient(supabaseUrl, supabaseKey, {
-                global: {
-                  headers: {
-                    Authorization: `Bearer ${bearerToken}`,
-                  },
-                },
-              })
-            : supabase;
+          const db = supabaseServiceClient();
+
+          const notifiedUserIds = Array.from(
+            new Set([
+              ...(Array.isArray(room.members) ? room.members : []),
+              ...(Array.isArray(room.pending_requests)
+                ? room.pending_requests.map((request) => request.user_id)
+                : []),
+              ...(Array.isArray(room.pending_invites) ? room.pending_invites : []),
+            ].filter(Boolean))
+          );
+
+          if (notifiedUserIds.length > 0) {
+            await Promise.all(
+              notifiedUserIds.map((userId) =>
+                db.from("notifications").insert({
+                  user_id: userId,
+                  message: JSON.stringify({
+                    type: "room_deleted",
+                    roomId,
+                    roomName: room.name,
+                    text: `The room \"${room.name}\" was deleted and removed from your rooms list.`,
+                  }),
+                  read: false,
+                })
+              )
+            );
+          }
+
           const { data: deletedRooms, error: deleteError } = await db
             .from("chat_rooms")
             .delete()

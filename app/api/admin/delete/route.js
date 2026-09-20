@@ -264,33 +264,69 @@ export async function POST(req) {
         );
       }
 
-      // 1. Remove from Supabase chat_rooms and verify the row was actually deleted.
-      const { data: deletedRooms, error: deleteError } = await db
+      const dataFilePath = path.join(process.cwd(), "data", "chat-rooms.json");
+      let localRooms = [];
+      let roomRecord = null;
+
+      if (fs.existsSync(dataFilePath)) {
+        try {
+          localRooms = JSON.parse(fs.readFileSync(dataFilePath, "utf8") || "[]");
+          roomRecord = localRooms.find((room) => room.id === roomId) || null;
+        } catch (e) {
+          console.warn("Local chat rooms read warning:", e);
+        }
+      }
+
+      const roomMembers = Array.isArray(roomRecord?.members) ? roomRecord.members : [];
+      const roomRequests = Array.isArray(roomRecord?.pending_requests)
+        ? roomRecord.pending_requests.map((request) => request.user_id)
+        : [];
+      const roomInvites = Array.isArray(roomRecord?.pending_invites) ? roomRecord.pending_invites : [];
+
+      const db = createClient(supabaseUrl, supabaseServiceKey, {
+        auth: {
+          persistSession: false,
+          autoRefreshToken: false,
+        },
+      });
+
+      const notifiedUserIds = Array.from(new Set([...roomMembers, ...roomRequests, ...roomInvites].filter(Boolean)));
+
+      if (notifiedUserIds.length > 0) {
+        try {
+          await Promise.all(
+            notifiedUserIds.map((userId) =>
+              db.from("notifications").insert({
+                user_id: userId,
+                message: JSON.stringify({
+                  type: "room_deleted",
+                  roomId,
+                  roomName: roomRecord?.name || "Room",
+                  text: `The room "${roomRecord?.name || roomId}" was deleted and removed from your rooms list.`,
+                }),
+                read: false,
+              })
+            )
+          );
+        } catch (e) {
+          console.warn("Room delete notification warning:", e);
+        }
+      }
+
+      // 1. Remove from Supabase chat_rooms.
+      const { error: deleteError } = await db
         .from("chat_rooms")
         .delete()
-        .eq("id", roomId)
-        .select("id");
+        .eq("id", roomId);
 
       if (deleteError) {
         throw deleteError;
       }
 
-      if (!deletedRooms || deletedRooms.length === 0) {
-        return NextResponse.json(
-          {
-            error:
-              "Supabase did not delete the room row, so the room was not removed. Check the room id or Supabase permissions.",
-          },
-          { status: 403 }
-        );
-      }
-
       // 2. Remove from local JSON storage after the database delete succeeds.
-      const dataFilePath = path.join(process.cwd(), "data", "chat-rooms.json");
       if (fs.existsSync(dataFilePath)) {
         try {
-          const rooms = JSON.parse(fs.readFileSync(dataFilePath, "utf8") || "[]");
-          const filtered = rooms.filter((r) => r.id !== roomId);
+          const filtered = localRooms.filter((r) => r.id !== roomId);
           fs.writeFileSync(dataFilePath, JSON.stringify(filtered, null, 2), "utf8");
         } catch (e) {
           console.warn("Local chat rooms delete warning:", e);
