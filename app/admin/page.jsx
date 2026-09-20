@@ -40,6 +40,11 @@ export default function AdminPage() {
   const [userSearch, setUserSearch] = useState("");
   const [roomSearch, setRoomSearch] = useState("");
 
+  // Heavy tab datasets are loaded on demand.
+  const [liveLoaded, setLiveLoaded] = useState(false);
+  const [usersLoaded, setUsersLoaded] = useState(false);
+  const [roomsLoaded, setRoomsLoaded] = useState(false);
+
   // Action busy states
   const [busyId, setBusyId] = useState(null);
 
@@ -62,7 +67,10 @@ export default function AdminPage() {
       if (!ignore) {
         setUser(u);
         if (isAdmin(u)) {
-          await Promise.all([loadPending(), loadLivePosts(), loadUsers(), loadRooms()]);
+          await loadPending();
+          setLiveLoaded(false);
+          setUsersLoaded(false);
+          setRoomsLoaded(false);
         }
         setLoading(false);
       }
@@ -82,6 +90,33 @@ export default function AdminPage() {
       authSub?.subscription?.unsubscribe();
     };
   }, []);
+
+  useEffect(() => {
+    if (!user || !isAdmin(user)) return;
+
+    async function loadActiveTabData() {
+      try {
+        if (activeTab === "live" && !liveLoaded) {
+          await loadLivePosts();
+          setLiveLoaded(true);
+        }
+
+        if (activeTab === "users" && !usersLoaded) {
+          await loadUsers();
+          setUsersLoaded(true);
+        }
+
+        if (activeTab === "rooms" && !roomsLoaded) {
+          await loadRooms();
+          setRoomsLoaded(true);
+        }
+      } catch (e) {
+        console.warn("Failed to load admin tab data:", e);
+      }
+    }
+
+    loadActiveTabData();
+  }, [activeTab, user, liveLoaded, usersLoaded, roomsLoaded]);
 
   const loadRooms = async () => {
     try {

@@ -276,7 +276,6 @@ export async function POST(req) {
       const {
         name,
         description,
-        icon = "globe",
         image_url = "",
         is_private = false,
         creator_id,
