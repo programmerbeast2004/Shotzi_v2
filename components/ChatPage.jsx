@@ -1,36 +1,36 @@
 "use client";
 
-import { useEffect, useState, useRef, useMemo } from "react";
+import {
+    ArrowLeft,
+    ArrowRight,
+    Ban,
+    Bell,
+    BellOff,
+    CheckCheck,
+    ChevronDown,
+    ChevronUp,
+    ImageIcon,
+    MessageSquare,
+    MoreVertical,
+    Search,
+    Send,
+    ShieldCheck,
+    Smile,
+    Trash2,
+    Users,
+    X,
+} from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { supabase, getAuthUser } from "../lib/supabaseClient";
-import { formatExactLastSeen } from "./lastSeen";
-import {
-  Search,
-  MessageSquare,
-  Users,
-  MoreVertical,
-  Smile,
-  Send,
-  CheckCheck,
-  ArrowLeft,
-  ArrowRight,
-  ImageIcon,
-  Bell,
-  BellOff,
-  Ban,
-  ShieldCheck,
-  ChevronUp,
-  ChevronDown,
-  X,
-  Trash2,
-} from "lucide-react";
-import { useToast } from "./Toast";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { authFetch } from "../lib/apiClient";
+import { formatMessageDate, formatMessageTime, formatRelativeTime } from "../lib/dateUtils";
+import { getAuthUser, supabase } from "../lib/supabaseClient";
 import AuthBarrier from "./AuthBarrier";
 import ConfirmDialog from "./ConfirmDialog";
 import EmojiPicker from "./EmojiPicker";
-import { authFetch } from "../lib/apiClient";
-import { formatMessageTime, formatMessageDate, formatRelativeTime } from "../lib/dateUtils";
+import { formatExactLastSeen } from "./lastSeen";
+import { useToast } from "./Toast";
 
 // Deterministic avatar palette — consistent colour per user derived from their name
 const AVATAR_PALETTE_LIST = [
@@ -631,11 +631,11 @@ export default function ChatPage() {
         >
           <div className="space-y-3.5 flex-1 flex flex-col min-h-0">
             {/* Top Toggle Pills: Messages vs Curators */}
-            <div className="flex items-center gap-3.5 pt-1.5 pb-0.5">
+            <div className="flex flex-nowrap items-center gap-2 xl:gap-3.5 pt-1.5 pb-0.5 overflow-x-auto scrollbar-none [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
               <button
                 type="button"
                 onClick={() => setActiveTab("messages")}
-                className={`inline-flex items-center gap-2.5 px-5 py-2.5 rounded-full text-xs font-bold transition-all ${
+                className={`inline-flex items-center gap-2 px-4 xl:px-5 py-2.5 rounded-full text-xs font-bold transition-all whitespace-nowrap shrink-0 ${
                   activeTab === "messages"
                     ? "bg-[#FFD21E] text-black border-2 border-black shadow-[2px_2px_0px_#18181B]"
                     : "text-zinc-600 hover:text-black hover:bg-black/5"
@@ -651,7 +651,7 @@ export default function ChatPage() {
                   setActiveTab("curators");
                   if (curators.length === 0) loadCurators();
                 }}
-                className={`inline-flex items-center gap-2.5 px-4.5 py-2.5 rounded-full text-xs font-bold transition-all ${
+                className={`inline-flex items-center gap-2 px-4 xl:px-4.5 py-2.5 rounded-full text-xs font-bold transition-all whitespace-nowrap shrink-0 ${
                   activeTab === "curators"
                     ? "bg-[#FFD21E] text-black border-2 border-black shadow-[2px_2px_0px_#18181B]"
                     : "text-zinc-600 hover:text-black hover:bg-black/5"

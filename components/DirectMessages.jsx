@@ -1,28 +1,21 @@
 "use client";
 
-import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
-import { supabase, getAuthUser } from "../lib/supabaseClient";
-import { formatExactLastSeen } from "./lastSeen";
 import {
   Send,
-  ArrowLeft,
   Smile,
-  ShieldAlert,
-  Sparkles,
-  Search,
-  MoreVertical,
-  CheckCheck,
-  User,
+  User
 } from "lucide-react";
-import { useToast } from "./Toast";
+import Link from "next/link";
+import { useEffect, useRef, useState } from "react";
+import { getAuthUser, supabase } from "../lib/supabaseClient";
 import EmojiPicker from "./EmojiPicker";
+import { useToast } from "./Toast";
 
 export default function DirectMessages({ selectedUserId, onBack }) {
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState(null);
-  const [partner, setPartner] = useState(null);
+  const [partnerProfile, setPartnerProfile] = useState(null);
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
   const [showEmoji, setShowEmoji] = useState(false);
@@ -189,7 +182,7 @@ export default function DirectMessages({ selectedUserId, onBack }) {
     );
   }
 
-  const partnerDisplay = partnerProfile?.display_name || selectedUsername || "Photographer";
+  const partnerDisplay = partnerProfile?.display_name || partnerProfile?.username || "Photographer";
   const status = formatLastSeen(partnerProfile?.last_active);
 
   return (
@@ -216,19 +209,19 @@ export default function DirectMessages({ selectedUserId, onBack }) {
 
           <div>
             <Link
-              href={`/u/${partnerProfile?.username || selectedUsername}`}
+              href={`/u/${partnerProfile?.username || selectedUserId}`}
               className="font-medium text-sm text-ink hover:text-accent transition-colors block"
             >
               {partnerDisplay}
             </Link>
             <p className="text-[11px] text-ink-muted">
-              {status?.text || `@${partnerProfile?.username || selectedUsername}`}
+              {status?.text || `@${partnerProfile?.username || selectedUserId}`}
             </p>
           </div>
         </div>
 
         <Link
-          href={`/u/${partnerProfile?.username || selectedUsername}`}
+          href={`/u/${partnerProfile?.username || selectedUserId}`}
           className="text-xs text-ink-secondary hover:text-ink font-medium px-3 py-1 rounded-full border border-border bg-surface-soft hover:bg-surface transition-colors"
         >
           View Roll
