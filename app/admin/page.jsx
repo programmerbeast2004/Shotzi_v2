@@ -1,29 +1,27 @@
 "use client";
 
+import {
+  Check,
+  Clock,
+  ExternalLink,
+  ImageIcon,
+  Key,
+  MessageSquare,
+  Search,
+  Shield,
+  Trash2,
+  Users,
+  UserX,
+  X
+} from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { isAdmin } from "../../lib/admin";
-import { executeAdminDelete } from "../../lib/adminService";
-import { supabase, getAuthUser } from "../../lib/supabaseClient";
 import ConfirmDialog from "../../components/ConfirmDialog";
 import { useToast } from "../../components/Toast";
+import { isAdmin } from "../../lib/admin";
+import { executeAdminDelete } from "../../lib/adminService";
 import { authFetch } from "../../lib/apiClient";
-import {
-  Shield,
-  Clock,
-  ImageIcon,
-  Users,
-  Search,
-  Check,
-  X,
-  Trash2,
-  ExternalLink,
-  AlertTriangle,
-  UserX,
-  MessageSquare,
-  Crown,
-  Key,
-} from "lucide-react";
+import { getAuthUser, supabase } from "../../lib/supabaseClient";
 
 export default function AdminPage() {
   const [user, setUser] = useState(null);
@@ -934,7 +932,7 @@ export default function AdminPage() {
                 const memberCount = room.members?.length || 0;
                 const pendingCount = room.pending_requests?.length || 0;
                 const invitesCount = room.pending_invites?.length || 0;
-                const isDefault = room.id === "corner_dump" || room.id === "coffee_corner";
+                const isDefault = room.id === "everyone" || room.id === "corner_dump" || room.id === "coffee_corner";
 
                 return (
                   <div
@@ -974,9 +972,12 @@ export default function AdminPage() {
                         {/* Master Admin purge room button */}
                         <button
                           type="button"
+                          disabled={isDefault}
                           onClick={() => handleDeleteRoom(room)}
-                          className="px-3 py-1.5 rounded-full bg-[#FF5376] hover:bg-rose-600 text-white text-xs font-black border-2 border-black shadow-[1.5px_1.5px_0px_#18181B] transition-transform active:scale-95 shrink-0 inline-flex items-center gap-1 cursor-pointer"
-                          title="Purge room completely"
+                          className={`px-3 py-1.5 rounded-full bg-[#FF5376] text-white text-xs font-black border-2 border-black shadow-[1.5px_1.5px_0px_#18181B] shrink-0 inline-flex items-center gap-1 ${
+                            isDefault ? "opacity-50 cursor-not-allowed" : "hover:bg-rose-600 transition-transform active:scale-95 cursor-pointer"
+                          }`}
+                          title={isDefault ? "Default room cannot be deleted" : "Purge room completely"}
                         >
                           <Trash2 className="w-3.5 h-3.5 stroke-[2.5]" />
                           <span>Delete</span>

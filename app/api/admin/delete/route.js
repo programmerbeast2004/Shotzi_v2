@@ -1,6 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
-import { NextResponse } from "next/server";
 import fs from "fs";
+import { NextResponse } from "next/server";
 import path from "path";
 import { ADMIN_EMAIL } from "../../../../lib/admin";
 
@@ -247,7 +247,45 @@ export async function POST(req) {
         return NextResponse.json({ error: "Missing roomId" }, { status: 400 });
       }
 
-      // 1. Remove from local JSON storage
+      if (roomId === "everyone") {
+        return NextResponse.json(
+          { error: "The default Everyone's Corner room cannot be deleted." },
+          { status: 403 }
+        );
+      }
+
+      if (!supabaseServiceKey) {
+        return NextResponse.json(
+          {
+            error:
+              "Room deletion requires SUPABASE_SERVICE_ROLE_KEY so the admin route can remove the room from Supabase as well as local storage.",
+          },
+          { status: 403 }
+        );
+      }
+
+      // 1. Remove from Supabase chat_rooms and verify the row was actually deleted.
+      const { data: deletedRooms, error: deleteError } = await db
+        .from("chat_rooms")
+        .delete()
+        .eq("id", roomId)
+        .select("id");
+
+      if (deleteError) {
+        throw deleteError;
+      }
+
+      if (!deletedRooms || deletedRooms.length === 0) {
+        return NextResponse.json(
+          {
+            error:
+              "Supabase did not delete the room row, so the room was not removed. Check the room id or Supabase permissions.",
+          },
+          { status: 403 }
+        );
+      }
+
+      // 2. Remove from local JSON storage after the database delete succeeds.
       const dataFilePath = path.join(process.cwd(), "data", "chat-rooms.json");
       if (fs.existsSync(dataFilePath)) {
         try {
@@ -258,9 +296,6 @@ export async function POST(req) {
           console.warn("Local chat rooms delete warning:", e);
         }
       }
-
-      // 2. Remove from Supabase chat_rooms
-      await db.from("chat_rooms").delete().eq("id", roomId);
 
       // 3. Clean up all room messages
       await db.from("global_messages").delete().ilike("message", `%${roomId}%`);

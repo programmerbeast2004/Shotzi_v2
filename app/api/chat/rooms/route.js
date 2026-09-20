@@ -1,9 +1,9 @@
-import { NextResponse } from "next/server";
-import fs from "fs";
-import path from "path";
 import { createClient } from "@supabase/supabase-js";
-import { getVerifiedUser } from "../../../../lib/serverAuth";
+import fs from "fs";
+import { NextResponse } from "next/server";
+import path from "path";
 import { ADMIN_EMAIL } from "../../../../lib/admin";
+import { getVerifiedUser } from "../../../../lib/serverAuth";
 
 const dataFilePath = path.join(process.cwd(), "data", "chat-rooms.json");
 
@@ -257,6 +257,8 @@ export async function GET(req) {
 
 export async function POST(req) {
   try {
+    const authHeader = req.headers.get("authorization");
+    const bearerToken = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : null;
     const verifiedUser = await getVerifiedUser(req);
     if (!verifiedUser) {
       return NextResponse.json(
@@ -559,6 +561,13 @@ export async function POST(req) {
         return NextResponse.json({ error: "Room not found." }, { status: 404 });
       }
 
+      if (roomId === "everyone") {
+        return NextResponse.json(
+          { error: "The default Everyone's Corner room cannot be deleted." },
+          { status: 403 }
+        );
+      }
+
       const room = rooms[roomIndex];
       const isAuthorized = room.creator_id === creatorId || (await checkIsAdmin(creatorId));
       if (!isAuthorized) {
@@ -575,7 +584,32 @@ export async function POST(req) {
       // 2. Remove from Supabase chat_rooms table
       if (supabase) {
         try {
-          await supabase.from("chat_rooms").delete().eq("id", roomId);
+          const db = bearerToken
+            ? createClient(supabaseUrl, supabaseKey, {
+                global: {
+                  headers: {
+                    Authorization: `Bearer ${bearerToken}`,
+                  },
+                },
+              })
+            : supabase;
+          const { data: deletedRooms, error: deleteError } = await db
+            .from("chat_rooms")
+            .delete()
+            .eq("id", roomId)
+            .select("id");
+          if (deleteError) {
+            throw deleteError;
+          }
+          if (!deletedRooms || deletedRooms.length === 0) {
+            return NextResponse.json(
+              {
+                error:
+                  "Room delete was blocked by Supabase RLS. Configure SUPABASE_SERVICE_ROLE_KEY or ensure the current user is authorized to delete the room.",
+              },
+              { status: 403 }
+            );
+          }
         } catch (e) {
           console.warn("Supabase room delete warning:", e);
         }
