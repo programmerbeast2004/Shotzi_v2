@@ -1,27 +1,26 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import {
+  ArrowRight,
+  Camera,
+  Compass,
+  Globe,
+  Heart,
+  Image as ImageIcon,
+  MessageSquare,
+  Plus,
+  Sparkles
+} from "lucide-react";
 import Link from "next/link";
+import { useEffect, useMemo, useState } from "react";
+import { useAuthDrawer } from "../components/AuthDrawer";
 import PostGrid from "../components/PostGrid";
 import SkeletonCard from "../components/SkeletonCard";
+import { useToast } from "../components/Toast";
 import { isAdmin } from "../lib/admin";
 import { executeAdminDelete } from "../lib/adminService";
-import { supabase, getAuthUser } from "../lib/supabaseClient";
 import { scrollToCurrentHash } from "../lib/scrollToSection";
-import {
-  Plus,
-  Compass,
-  Sparkles,
-  Heart,
-  Camera,
-  Globe,
-  MessageSquare,
-  Image as ImageIcon,
-  ArrowRight,
-  ShieldCheck,
-} from "lucide-react";
-import { useToast } from "../components/Toast";
-import { useAuthDrawer } from "../components/AuthDrawer";
+import { getAuthUser, supabase } from "../lib/supabaseClient";
 
 export default function HomePage() {
   const [posts, setPosts] = useState([]);
@@ -270,18 +269,18 @@ export default function HomePage() {
                 <p className="text-xs sm:text-sm text-zinc-600 font-medium truncate">@{username} • Your soft place for loud feelings</p>
               </div>
             </div>
-            <div className="grid grid-cols-2 sm:flex sm:items-center gap-2 sm:gap-2.5 w-full sm:w-auto">
-              <Link href="/upload" prefetch className="inline-flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-5 py-2 sm:py-2.5 rounded-full bg-[#FFD21E] text-black font-black text-xs sm:text-sm border-2 border-black shadow-[2px_2px_0px_#000] hover:shadow-[4px_4px_0px_#000] hover:-translate-y-0.5 transition-all text-center">
-                <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4 stroke-[3]" /><span>Dump a shot</span>
+            <div className="grid grid-cols-2 sm:flex sm:flex-nowrap sm:items-center gap-2 sm:gap-2.5 w-full sm:w-auto">
+              <Link href="/upload" prefetch className="inline-flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-5 py-2 sm:py-2.5 rounded-full bg-[#FFD21E] text-black font-black text-xs sm:text-sm border-2 border-black shadow-[2px_2px_0px_#000] hover:shadow-[4px_4px_0px_#000] hover:-translate-y-0.5 transition-all text-center whitespace-nowrap shrink-0">
+                <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4 stroke-[3] shrink-0" /><span className="whitespace-nowrap leading-none">Dump a shot</span>
               </Link>
-              <Link href="/reels" prefetch className="inline-flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-full bg-white text-black font-bold text-xs sm:text-sm border-2 border-black shadow-[2px_2px_0px_#000] hover:bg-zinc-50 hover:-translate-y-0.5 transition-all text-center">
-                <Compass className="w-3.5 h-3.5 sm:w-4 sm:h-4 stroke-[2.5]" /><span>Infinite</span>
+              <Link href="/reels" prefetch className="inline-flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-full bg-white text-black font-bold text-xs sm:text-sm border-2 border-black shadow-[2px_2px_0px_#000] hover:bg-zinc-50 hover:-translate-y-0.5 transition-all text-center whitespace-nowrap shrink-0">
+                <Compass className="w-3.5 h-3.5 sm:w-4 sm:h-4 stroke-[2.5] shrink-0" /><span className="whitespace-nowrap leading-none">Infinite</span>
               </Link>
-              <Link href="/chat" prefetch className="inline-flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-full bg-white text-black font-bold text-xs sm:text-sm border-2 border-black shadow-[2px_2px_0px_#000] hover:bg-zinc-50 hover:-translate-y-0.5 transition-all text-center">
-                <MessageSquare className="w-3.5 h-3.5 sm:w-4 sm:h-4 stroke-[2.2]" /><span>Messages</span>
+              <Link href="/chat" prefetch className="inline-flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-full bg-white text-black font-bold text-xs sm:text-sm border-2 border-black shadow-[2px_2px_0px_#000] hover:bg-zinc-50 hover:-translate-y-0.5 transition-all text-center whitespace-nowrap shrink-0">
+                <MessageSquare className="w-3.5 h-3.5 sm:w-4 sm:h-4 stroke-[2.2] shrink-0" /><span className="whitespace-nowrap leading-none">Messages</span>
               </Link>
-              <Link href="/chat/global" prefetch className="inline-flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-full bg-white text-black font-bold text-xs sm:text-sm border-2 border-black shadow-[2px_2px_0px_#000] hover:bg-zinc-50 hover:-translate-y-0.5 transition-all text-center">
-                <Globe className="w-3.5 h-3.5 sm:w-4 sm:h-4 stroke-[2.2]" /><span>Global</span>
+              <Link href="/chat/global" prefetch className="inline-flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-full bg-white text-black font-bold text-xs sm:text-sm border-2 border-black shadow-[2px_2px_0px_#000] hover:bg-zinc-50 hover:-translate-y-0.5 transition-all text-center whitespace-nowrap shrink-0">
+                <Globe className="w-3.5 h-3.5 sm:w-4 sm:h-4 stroke-[2.2] shrink-0" /><span className="whitespace-nowrap leading-none">Global</span>
               </Link>
             </div>
           </div>
